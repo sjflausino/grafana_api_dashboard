@@ -3,7 +3,7 @@ name: Deploying the application dashboards on Grafana address.
 on:
   push:
     branches:
-      - 'master'
+      - "master"
   pull_request:
 
 jobs:
@@ -11,48 +11,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-    # Getting the UID from datasources 
+      # Getting the UID from datasources
       - name: Getting uid from Jaeger datasource
         continue-on-error: true
-        run: | 
+        run: |
           export UID_TRACE_DASHBOARD=$(curl -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" --url ${{ secrets.GRAFANA_ADDR }}/api/datasources | jq '.[] | select(.type == "jaeger")'.uid)
           echo "UID_TRACE = $UID_TRACE_DASHBOARD" 
           echo "UID_TRACE=$UID_TRACE_DASHBOARD" >> $GITHUB_ENV
 
       - name: Getting uid from Loki datasource
-        continue-on-error: true 
-        run: | 
+        continue-on-error: true
+        run: |
           export UID_LOG_DASHBOARD=$(curl -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" --url ${{ secrets.GRAFANA_ADDR }}/api/datasources | jq '.[] | select(.type == "loki")'.uid)
           echo "UID_LOG = $UID_LOG_DASHBOARD"
           echo "UID_LOG=$UID_LOG_DASHBOARD" >> $GITHUB_ENV
 
       - name: Getting uid from Prometheus datasource
         continue-on-error: true
-        run: | 
+        run: |
           export UID_METRICS_DASHBOARD=$(curl -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" --url ${{ secrets.GRAFANA_ADDR }}/api/datasources | jq '.[] | select(.type == "prometheus")'.uid)
           echo "UID_METRICS = $UID_METRICS_DASHBOARD" 
           echo "UID_METRICS=$UID_METRICS_DASHBOARD" >> $GITHUB_ENV
-          
-    # Change UID from defaults dashboard 
-      - name: Changing uid of dashboard from Jaeger 
+
+      # Change UID from defaults dashboard
+      - name: Changing uid of dashboard from Jaeger
         continue-on-error: true
-        run: | 
+        run: |
           jq '(.dashboard.panels[].datasource | select(.type == "jaeger")).uid |= ${{ env.UID_TRACE }}' "dashboards/jaeger-trace.json" > ${{ secrets.APP_NAME }}-jaeger-trace.json
           cat ${{ secrets.APP_NAME }}-jaeger-trace.json
-          
-      - name: Changing uid of dashboard from Loki 
+
+      - name: Changing uid of dashboard from Loki
         continue-on-error: true
-        run: | 
+        run: |
           jq '(.dashboard.panels[].datasource | select(.type == "loki")).uid |= ${{ env.UID_LOG }}' "dashboards/loki-logs.json" > ${{ secrets.APP_NAME }}-loki-logs.json
           cat ${{ secrets.APP_NAME }}-loki-logs.json
-          
-      - name: Changing uid of dashboard from Prometheus 
+
+      - name: Changing uid of dashboard from Prometheus
         continue-on-error: true
-        run: | 
+        run: |
           jq '(.dashboard.panels[].datasource | select(.type == "prometheus")).uid |= ${{ env.UID_METRICS }}' "dashboards/kong-metrics.json" > ${{ secrets.APP_NAME }}-kong-metrics.json
           cat ${{ secrets.APP_NAME }}-kong-metrics.json
-          
-    #POST Dashboards on Grafana API
+
+      #POST Dashboards on Grafana API
       - name: Post Jaeger trace dashboard
         continue-on-error: true
         run: |
@@ -60,7 +60,7 @@ jobs:
           -H "Accept: application/json" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" \
-          --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db 
+          --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db
 
       - name: Post Kong metrics dashboard
         continue-on-error: true
@@ -69,7 +69,7 @@ jobs:
           -H "Accept: application/json" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" \
-          --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db 
+          --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db
 
       - name: Post Loki logs dashboard
         continue-on-error: true
@@ -78,4 +78,4 @@ jobs:
           -H "Accept: application/json" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" \
-          --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db 
+          --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db
