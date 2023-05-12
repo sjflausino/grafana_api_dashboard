@@ -3,7 +3,7 @@ name: Deploying the application dashboards on Grafana address.
 on:
   push:
     branches:
-      - "master"
+      - "main"
   pull_request:
 
 jobs:
