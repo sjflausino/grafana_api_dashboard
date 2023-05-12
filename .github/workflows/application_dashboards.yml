@@ -13,18 +13,21 @@ jobs:
       - uses: actions/checkout@v3
     # Getting the UID from datasources 
       - name: Getting uid from Jaeger datasource
+        continue-on-error: true
         run: | 
           export UID_TRACE_DASHBOARD=$(curl -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" --url ${{ secrets.GRAFANA_ADDR }}/api/datasources | jq '.[] | select(.type == "jaeger")'.uid)
           echo "UID_TRACE = $UID_TRACE_DASHBOARD" 
           echo "UID_TRACE=$UID_TRACE_DASHBOARD" >> $GITHUB_ENV
 
       - name: Getting uid from Loki datasource
+        continue-on-error: true 
         run: | 
           export UID_LOG_DASHBOARD=$(curl -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" --url ${{ secrets.GRAFANA_ADDR }}/api/datasources | jq '.[] | select(.type == "loki")'.uid)
           echo "UID_LOG = $UID_LOG_DASHBOARD"
           echo "UID_LOG=$UID_LOG_DASHBOARD" >> $GITHUB_ENV
 
       - name: Getting uid from Prometheus datasource
+        continue-on-error: true
         run: | 
           export UID_METRICS_DASHBOARD=$(curl -H "Authorization: Bearer ${{ secrets.GRAFANA_API_TOKEN }}" --url ${{ secrets.GRAFANA_ADDR }}/api/datasources | jq '.[] | select(.type == "prometheus")'.uid)
           echo "UID_METRICS = $UID_METRICS_DASHBOARD" 
@@ -32,22 +35,26 @@ jobs:
           
     # Change UID from defaults dashboard 
       - name: Changing uid of dashboard from Jaeger 
+        continue-on-error: true
         run: | 
           jq '(.dashboard.panels[].datasource | select(.type == "jaeger")).uid |= ${{ env.UID_TRACE }}' "dashboards/jaeger-trace.json" > ${{ secrets.APP_NAME }}-jaeger-trace.json
           cat ${{ secrets.APP_NAME }}-jaeger-trace.json
           
       - name: Changing uid of dashboard from Loki 
+        continue-on-error: true
         run: | 
           jq '(.dashboard.panels[].datasource | select(.type == "loki")).uid |= ${{ env.UID_LOG }}' "dashboards/loki-logs.json" > ${{ secrets.APP_NAME }}-loki-logs.json
           cat ${{ secrets.APP_NAME }}-loki-logs.json
           
       - name: Changing uid of dashboard from Prometheus 
+        continue-on-error: true
         run: | 
           jq '(.dashboard.panels[].datasource | select(.type == "prometheus")).uid |= ${{ env.UID_METRICS }}' "dashboards/kong-metrics.json" > ${{ secrets.APP_NAME }}-kong-metrics.json
           cat ${{ secrets.APP_NAME }}-kong-metrics.json
           
     #POST Dashboards on Grafana API
       - name: Post Jaeger trace dashboard
+        continue-on-error: true
         run: |
           curl -X POST -d @${{ secrets.APP_NAME }}-jaeger-trace.json \
           -H "Accept: application/json" \
@@ -56,6 +63,7 @@ jobs:
           --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db 
 
       - name: Post Kong metrics dashboard
+        continue-on-error: true
         run: |
           curl -X POST -d @${{ secrets.APP_NAME }}-kong-metrics.json \
           -H "Accept: application/json" \
@@ -64,6 +72,7 @@ jobs:
           --url ${{ secrets.GRAFANA_ADDR }}/api/dashboards/db 
 
       - name: Post Loki logs dashboard
+        continue-on-error: true
         run: |
           curl -X POST -d @${{ secrets.APP_NAME }}-loki-logs.json \
           -H "Accept: application/json" \
